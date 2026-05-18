@@ -1,24 +1,35 @@
 #!/bin/bash
 
+# Update system
 yum update -y
 
+# Install Python + pip
 yum install -y python3 python3-pip
 
+# Install Flask
 pip3 install flask
 
-cat <<EOF > /home/ec2-user/app.py
-from flask import Flask, send_file
+# Create app directory
+mkdir -p /opt/flask-app/templates
+
+# Create Flask app
+cat <<EOF > /opt/flask-app/app.py
+from flask import Flask, render_template
+from datetime import datetime
 
 app = Flask(__name__)
 
 @app.route("/")
 def home():
-    return send_file("index.html")
+    current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    return render_template("index.html", current_time=current_time)
 
-app.run(host="0.0.0.0", port=80)
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=80)
 EOF
 
-cat <<EOF > /home/ec2-user/index.html
+# Create HTML template
+cat <<EOF > /opt/flask-app/templates/index.html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -82,7 +93,7 @@ cat <<EOF > /home/ec2-user/index.html
     </div>
 
     <div class="time">
-        Current Time:<br>
+        Current Time (EC2):<br>
         <strong>{{ current_time }}</strong>
     </div>
     <div class="role">Senior Site Reliability Engineer - Vinay Singh!</div>
@@ -91,7 +102,9 @@ cat <<EOF > /home/ec2-user/index.html
 </body>
 </html>
 EOF
+EOF
 
-cd /home/ec2-user
+# Start application
+cd /opt/flask-app
 
 nohup python3 app.py > app.log 2>&1 &
