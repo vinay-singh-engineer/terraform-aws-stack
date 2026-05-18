@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Python Flask App</title>
+
+    <style>
+        body {
+            margin: 0;
+            background: radial-gradient(circle at top, #0f172a, #020617);
+            color: #00ff99;
+            font-family: "Courier New", monospace;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+		.role {
+			color: #9ca3af;  /* nice gray */
+			margin-top: 10px;
+		}
+        .box {
+            text-align: center;
+            padding: 50px;
+            border: 2px solid #00ff99;
+            border-radius: 15px;
+            box-shadow: 0 0 25px #00ff99;
+        }
+
+        .typewriter h1 {
+            overflow: hidden;
+            border-right: .15em solid #00ff99;
+            white-space: nowrap;
+            animation: typing 3s steps(30, end),
+                       blink 0.8s infinite;
+            font-size: 2.5rem;
+        }
+
+        @keyframes typing {
+            from { width: 0 }
+            to { width: 100% }
+        }
+
+        @keyframes blink {
+            50% { border-color: transparent }
+        }
+
+        .time {
+            margin-top: 20px;
+            font-size: 1.2rem;
+            color: #38bdf8;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="box">
+    <div class="typewriter">
+        <h1>Hello from Python Flask App! 🚀</h1>
+    </div>
+
+    <div class="time">
+        Current Time:<br>
+        <strong>{{ current_time }}</strong>
+    </div>
+    <div class="role">Senior Site Reliability Engineer - Vinay Singh!</div>
+</div>
+
+</body>
+</html>
