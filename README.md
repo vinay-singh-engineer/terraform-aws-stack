@@ -132,9 +132,7 @@ while true; do curl -s -o /dev/null -w "%{http_code}\n" http://<public-ip>; slee
 
 Wait for `200`, then open the URL in your browser. You should see:
 
-```
-Hello from Python Flask App! 🚀
-```
+![WebApp](WebAppOutput.png)
 
 ---
 
