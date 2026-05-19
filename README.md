@@ -193,17 +193,17 @@ This project shows practical understanding of:
 
 ---
 
-## 💻 Author
-
-[Vinay Singh](https://vinay-singh-engineer.github.io/portfolio)
-
----
-
 ## 📌 Notes
 
 - `terraform.tfvars` is gitignored — you must create it locally before running `terraform apply`
 - The app takes 3–5 minutes to become available after `terraform apply` completes
 - This project is intended for learning and demonstration purposes
 - Always run `terraform destroy` to avoid unnecessary AWS costs
+
+---
+
+## 💻 Author
+
+[Vinay Singh](https://vinay-singh-engineer.github.io/portfolio)
 
 ---
