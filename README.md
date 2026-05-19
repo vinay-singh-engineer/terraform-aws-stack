@@ -1,16 +1,10 @@
 # Infrastructure as Code (IaC) with Terraform: Python Web App on AWS 🚀
 
-This project uses **Terraform** to provision AWS infrastructure that runs a simple Python Flask web application.
+This project uses **Terraform** to provision AWS infrastructure that runs a Python Flask web application behind an nginx reverse proxy.
 
 ---
 
 ## 🧭 Architecture
-
-Terraform provisions the following on AWS:
-
-- EC2 instance (Amazon Linux 2)
-- Security Group (allows HTTP + SSH)
-- Flask application using user_data script
 
 ### Flow
 
@@ -25,11 +19,11 @@ Internet Gateway
   ↓
 Route Table
   ↓
-Security Group
+Security Group (HTTP open, SSH restricted to your IP)
   ↓
- EC2
+EC2 (t3.micro, encrypted EBS, IMDSv2 enforced)
   ↓
-Flask App Running
+nginx (port 80) → Gunicorn (port 8000) → Flask App
   ↓
 Public IP → Browser
 ```
@@ -42,15 +36,15 @@ Before running this project, install and configure the following tools.
 
 ---
 
-### 1. Install Terraform
+### 1. Install Terraform (>= 1.5.0)
 
-Download Terraform from: https://developer.hashicorp.com/terraform/downloads
+Download and install Terraform from: https://developer.hashicorp.com/terraform/downloads
 
 Verify installation: `terraform -v`
 
 ### 2. Install AWS CLI
 
-Download AWS CLI from https://aws.amazon.com/cli/
+Download and install AWS CLI from https://aws.amazon.com/cli/
 
 Verify installation: `aws --version`
 
@@ -71,10 +65,13 @@ Enter:
 
 ```
 iac-python-webapp/
-├── main.tf
-├── variables.tf
-├── outputs.tf
-├── user_data.sh
+├── main.tf               # All AWS resources
+├── variables.tf          # Input variable declarations
+├── outputs.tf            # Output declarations (public IP, app URL)
+├── user_data.sh          # EC2 bootstrap script (installs nginx, gunicorn, Flask)
+├── terraform.tfvars      # Your variable values (gitignored — you create this)
+├── .terraform.lock.hcl   # Provider version lock file
+├── .gitignore            # Excludes state files, provider binaries, tfvars
 └── README.md
 ```
 
@@ -88,54 +85,55 @@ iac-python-webapp/
 terraform init
 ```
 
-**Step 2:** Validate configuration
+**Step 2:** Create `terraform.tfvars` with your IP to restrict SSH access
+
+```
+ssh_allowed_cidr = "YOUR.IP.HERE/32"
+```
+
+Get your IP with: `curl -4 ifconfig.me/ip`
+
+**Step 3:** Validate configuration
 
 ```
 terraform validate
 ```
 
-**Step 3:** Preview execution plan
+**Step 4:** Preview execution plan
 
 ```
 terraform plan
 ```
 
-**Step 4:** Apply infrastructure
+**Step 5:** Apply infrastructure
 
 ```
 terraform apply
-```
-
-```
-terraform apply -auto-approve
 ```
 
 ---
 
 ## 🌍 Access the Application
 
-After successful deployment, Terraform will output something like:
+After a successful deploy, Terraform outputs:
 
 ```
-Outputs:
-
-app_url = "http://100.30.231.33"
-public_ip = "100.30.231.33"
+app_url = "http://<public-ip>"
+public_ip = "<public-ip>"
 ```
 
-Open your browser and visit `app_url`:
+**Wait 3–5 minutes** before opening the URL — `user_data.sh` runs on first boot and installs all dependencies before starting the app.
 
-(give few mins before accessing the url)
+Poll until ready:
 
+```bash
+while true; do curl -s -o /dev/null -w "%{http_code}\n" http://<public-ip>; sleep 5; done
 ```
-http://100.30.231.33
-```
 
-You should see:
+Wait for `200`, then open the URL in your browser. You should see:
 
 ```
 Hello from Python Flask App! 🚀
-
 ```
 
 ---
@@ -148,10 +146,6 @@ To avoid AWS charges, always destroy resources when not needed:
 terraform destroy
 ```
 
-```
-terraform destroy -auto-approve
-```
-
 ---
 
 ## 🧠 What This Project Demonstrates
@@ -161,24 +155,43 @@ This project shows practical understanding of:
 - **Infrastructure as Code (Terraform)**
   - Provisioned AWS infrastructure using Terraform
   - Defined repeatable and version-controlled infrastructure setup
-  - Built modular components for consistent deployments
-  - Externalized configuration such as AWS region and instance type in `variables.tf`
-  - Exposed key deployment details such as EC2 public IP and application URL via `outputs.tf`
+  - Externalized configuration (region, instance type, AZ, SSH CIDR) in `variables.tf`
+  - Exposed key deployment details via `outputs.tf`
+  - Pinned Terraform CLI version with `required_version`
+  - Locked provider versions with `.terraform.lock.hcl`
+
 - **AWS EC2 provisioning**
   - Launched Amazon Linux 2 EC2 instances using dynamic AMI lookup
-  - Configured instance to run a public web application
-  - Enabled public IP access for external connectivity
-- **Security Groups and basic networking**
-  - Configured inbound rules for HTTP (80) and SSH (22)
+  - Upgraded to `t3.micro` (current-generation, better performance than t2)
+  - Enforced IMDSv2 (`http_tokens = required`) to prevent SSRF-based credential theft
+  - Enabled EBS root volume encryption at rest
+
+- **Security hardening**
+  - Restricted SSH access to a single IP via `ssh_allowed_cidr` variable (not open to the internet)
+  - Enforced IMDSv2 on the instance metadata service
+  - Encrypted EBS root volume
+  - Protected state files and secrets with `.gitignore`
+
+- **Security Groups and networking**
+  - Configured inbound rules for HTTP (80) and SSH (22, IP-restricted)
   - Implemented VPC-based networking with custom subnets
   - Set up Internet Gateway and route tables for public access
+  - Parameterized availability zone for portability
+
+- **Production-grade application serving**
+  - Replaced Flask development server with **Gunicorn** WSGI server
+  - Used **nginx** as a reverse proxy (port 80 → Gunicorn on 8000)
+  - Managed app lifecycle with a **systemd service** (auto-restart on crash, starts on reboot)
+  - Pinned Flask and Gunicorn versions for reproducible deployments
+
 - **Automated server bootstrapping using user_data**
-  - Automated installation of Python and Flask at launch
-  - Deployed application files during instance initialization
-  - Configured service startup using shell scripting
+  - Automated full stack installation at launch (nginx, Python, Flask, Gunicorn)
+  - Used quoted heredocs (`<<'EOF'`) to safely embed Python and HTML without shell expansion
+  - Enabled `set -xe` logging to `/var/log/user_data.log` for bootstrap debugging
+
 - **Deploying a working web application in the cloud (AWS)**
   - Hosted a Flask web application on AWS EC2
-  - Served dynamic HTML displaying real-time server-generated timestamp over a public endpoint
+  - Served dynamic HTML displaying real-time UTC timestamp over a public endpoint
 
 ---
 
@@ -190,8 +203,9 @@ This project shows practical understanding of:
 
 ## 📌 Notes
 
-- Ensure AWS credentials are configured properly before running Terraform
+- `terraform.tfvars` is gitignored — you must create it locally before running `terraform apply`
+- The app takes 3–5 minutes to become available after `terraform apply` completes
 - This project is intended for learning and demonstration purposes
-- Always run terraform destroy to avoid unnecessary AWS costs
+- Always run `terraform destroy` to avoid unnecessary AWS costs
 
 ---

@@ -1,0 +1,26 @@
+# Terraform state — may contain AWS account IDs and resource details
+terraform.tfstate
+terraform.tfstate.backup
+*.tfstate
+*.tfstate.*
+
+# Terraform working directory — contains provider binaries (~80MB)
+.terraform/
+
+# Variable override files — may contain secrets
+*.tfvars
+*.tfvars.json
+!example.tfvars
+
+# Terraform lock override (keep .terraform.lock.hcl in git)
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Crash logs
+crash.log
+crash.*.log
+
+# macOS
+.DS_Store
