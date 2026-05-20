@@ -1,5 +1,7 @@
 # Infrastructure as Code (IaC) with Terraform: Python Web App on AWS 🚀
 
+![CI](https://github.com/vinay-singh-engineer/iac-python-webapp/actions/workflows/ci.yml/badge.svg)
+
 This project uses **Terraform** to provision AWS infrastructure that runs a Python Flask web application behind an nginx reverse proxy.
 
 ---
@@ -199,6 +201,17 @@ This project shows practical understanding of:
 - The app takes 3–5 minutes to become available after `terraform apply` completes
 - This project is intended for learning and demonstration purposes
 - Always run `terraform destroy` to avoid unnecessary AWS costs
+
+---
+
+## CI
+
+Two checks run on every push to `main` or `development`, and on pull requests targeting `main`:
+
+| Job | Tool | What it checks |
+| :--- | :--- | :--- |
+| Terraform format | `terraform fmt -check` | All `.tf` files are correctly formatted |
+| Terraform validate | `terraform validate` | Configuration is syntactically valid |
 
 ---
 
