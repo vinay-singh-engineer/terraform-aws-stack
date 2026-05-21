@@ -215,6 +215,12 @@ Two checks run on every push to `main` or `development`, and on pull requests ta
 
 ---
 
+## License
+
+MIT — use freely, attribute appreciated.
+
+---
+
 ## 💻 Author
 
 [Vinay Singh](https://vinay-singh-engineer.github.io/portfolio)
