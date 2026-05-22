@@ -1,5 +1,6 @@
 # Infrastructure as Code (IaC) with Terraform: Python Web App on AWS 🚀
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://github.com/vinay-singh-engineer/terraform-aws-stack/blob/main/LICENSE)
 ![CI](https://github.com/vinay-singh-engineer/iac-python-webapp/actions/workflows/ci.yml/badge.svg)
 
 This project uses **Terraform** to provision AWS infrastructure that runs a Python Flask web application behind an nginx reverse proxy.
