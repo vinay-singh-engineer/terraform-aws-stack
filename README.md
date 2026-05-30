@@ -224,6 +224,6 @@ MIT — use freely, attribute appreciated.
 
 ## 💻 Author
 
-[Vinay Singh](https://vinay-singh-engineer.github.io/portfolio)
+[Vinay Singh](https://vinay-singh-engineer.github.io)
 
 ---
