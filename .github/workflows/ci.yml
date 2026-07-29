@@ -10,9 +10,15 @@ jobs:
   terraform-lint:
     name: Terraform — fmt & validate
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        working-directory: [., bootstrap]
     steps:
       - uses: actions/checkout@v4
       - uses: hashicorp/setup-terraform@v3
       - run: terraform fmt -check -recursive
+        working-directory: ${{ matrix.working-directory }}
       - run: terraform init -backend=false
+        working-directory: ${{ matrix.working-directory }}
       - run: terraform validate
+        working-directory: ${{ matrix.working-directory }}

@@ -12,6 +12,10 @@ terraform.tfstate.backup
 *.tfvars.json
 !example.tfvars
 
+# Backend config — contains your actual state bucket/table names
+backend.hcl
+!backend.hcl.example
+
 # Terraform lock override (keep .terraform.lock.hcl in git)
 override.tf
 override.tf.json

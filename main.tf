@@ -6,6 +6,10 @@ terraform {
       version = "~> 5.0"
     }
   }
+
+  # Bucket/table names are environment-specific, so they're supplied at
+  # `terraform init` time via -backend-config=backend.hcl (see backend.hcl.example)
+  backend "s3" {}
 }
 
 provider "aws" {

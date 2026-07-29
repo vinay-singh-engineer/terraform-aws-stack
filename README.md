@@ -68,24 +68,61 @@ Enter:
 
 ```
 iac-python-webapp/
-├── main.tf               # All AWS resources
-├── variables.tf          # Input variable declarations
-├── outputs.tf            # Output declarations (public IP, app URL)
-├── user_data.sh          # EC2 bootstrap script (installs nginx, gunicorn, Flask)
-├── terraform.tfvars      # Your variable values (gitignored — you create this)
-├── .terraform.lock.hcl   # Provider version lock file
-├── .gitignore            # Excludes state files, provider binaries, tfvars
+├── main.tf                 # All AWS resources + S3 backend declaration
+├── variables.tf            # Input variable declarations
+├── outputs.tf              # Output declarations (public IP, app URL)
+├── user_data.sh            # EC2 bootstrap script (installs nginx, gunicorn, Flask)
+├── terraform.tfvars        # Your variable values (gitignored — you create this)
+├── backend.hcl.example     # Template for backend.hcl (see below)
+├── backend.hcl             # Your backend config (gitignored — you create this)
+├── .terraform.lock.hcl     # Provider version lock file
+├── .gitignore              # Excludes state files, provider binaries, tfvars, backend.hcl
+├── bootstrap/              # One-time setup: S3 state bucket + DynamoDB lock table
+│   ├── main.tf
+│   ├── variables.tf
+│   └── outputs.tf
 └── README.md
 ```
 
 ---
 
+## 🔒 Remote State Setup (one-time)
+
+This project stores Terraform state in an S3 bucket with DynamoDB-based locking, instead of a local `terraform.tfstate` file. The `bootstrap/` directory creates those two resources using local state (there's no backend to bootstrap the backend with).
+
+**Step 1:** Create the state bucket and lock table
+
+```bash
+cd bootstrap
+terraform init
+terraform apply -var="bucket_name=<globally-unique-bucket-name>"
+cd ..
+```
+
+**Step 2:** Create `backend.hcl` from the example, filling in the bucket name from Step 1
+
+```bash
+cp backend.hcl.example backend.hcl
+```
+
+```hcl
+bucket         = "<globally-unique-bucket-name>"
+key            = "iac-python-webapp/terraform.tfstate"
+region         = "us-east-1"
+dynamodb_table = "terraform-locks"
+encrypt        = true
+```
+
+You only need to do this once. From here on, all `terraform` commands below run against the root module (not `bootstrap/`).
+
+---
+
 ## 🚀 How to Run
 
-**Step 1:** Initialize Terraform
+**Step 1:** Initialize Terraform with the backend config from Step 2 above
 
 ```
-terraform init
+terraform init -backend-config=backend.hcl
 ```
 
 **Step 2:** Create `terraform.tfvars` with your IP to restrict SSH access
@@ -147,6 +184,8 @@ To avoid AWS charges, always destroy resources when not needed:
 terraform destroy
 ```
 
+The S3 state bucket and DynamoDB lock table created in `bootstrap/` are left in place (`prevent_destroy` is set on the bucket). Destroy them separately from `bootstrap/` if you're tearing everything down for good — note the bucket must be emptied of all object versions first.
+
 ---
 
 ## 🧠 What This Project Demonstrates
@@ -160,6 +199,7 @@ This project shows practical understanding of:
   - Exposed key deployment details via `outputs.tf`
   - Pinned Terraform CLI version with `required_version`
   - Locked provider versions with `.terraform.lock.hcl`
+  - Remote state in S3 with DynamoDB state locking, bootstrapped via a separate `bootstrap/` module
 
 - **AWS EC2 provisioning**
   - Launched Amazon Linux 2 EC2 instances using dynamic AMI lookup
@@ -172,6 +212,7 @@ This project shows practical understanding of:
   - Enforced IMDSv2 on the instance metadata service
   - Encrypted EBS root volume
   - Protected state files and secrets with `.gitignore`
+  - Encrypted S3 state bucket at rest, blocked all public access, and enabled versioning for recovery
 
 - **Security Groups and networking**
   - Configured inbound rules for HTTP (80) and SSH (22, IP-restricted)
@@ -199,6 +240,7 @@ This project shows practical understanding of:
 ## 📌 Notes
 
 - `terraform.tfvars` is gitignored — you must create it locally before running `terraform apply`
+- `backend.hcl` is gitignored — you must create it locally from `backend.hcl.example` after running `bootstrap/` (see [Remote State Setup](#-remote-state-setup-one-time))
 - The app takes 3–5 minutes to become available after `terraform apply` completes
 - This project is intended for learning and demonstration purposes
 - Always run `terraform destroy` to avoid unnecessary AWS costs
