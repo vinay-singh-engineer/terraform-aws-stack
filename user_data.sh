@@ -26,6 +26,10 @@ app = Flask(__name__)
 def home():
     current_time = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
     return render_template("index.html", current_time=current_time)
+
+@app.route("/health")
+def health():
+    return {"status": "ok"}, 200
 PYEOF
 
 # Create HTML template
